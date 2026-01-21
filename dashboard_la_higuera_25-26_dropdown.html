@@ -741,9 +741,14 @@ function buildDetalle(){
     const orderMes = (a,b)=>{ const [ma,ya]=a.split('-'); const [mb,yb]=b.split('-'); const ia=MES_ABR.indexOf(ma); const ib=MES_ABR.indexOf(mb); const ya2=parseInt(ya,10)||0; const yb2=parseInt(yb,10)||0; if(ya2!==yb2) return ya2-yb2; return ia-ib; };
     meses.sort(orderMes);
  let th=`<thead><tr><th>FAENA</th>`; for(const m of meses) th+=`<th>${m}</th>`; th+=`<th>TOTAL</th></tr></thead><tbody></tbody>`; table.innerHTML=th; const tb=table.querySelector('tbody');
+    const singleMonth = !Array.isArray(state.filtros.mes) && state.filtros.mes!=="Todos";
     for(const f of faenas){
       let row=`<td>${f}</td>`; let tot=0; for(const m of meses){ const v=byFaMes[f][m]||0; tot+=v; const val=(state.detalle.metrica==="COSTO_HA")?(state.supMap[c]? v/state.supMap[c]:NaN):v; row+=`<td>${fmt(val)}</td>`; }
-      const totVal=(state.detalle.metrica==="COSTO_HA")?(state.supMap[c]? tot/state.supMap[c]:NaN):tot; const shown=(state.filtros.mes!=="Todos")?((state.detalle.metrica==="COSTO_HA")?(state.supMap[c]? (byFaMes[f][meses[0]]||0)/state.supMap[c]:NaN):(byFaMes[f][meses[0]]||0)):totVal; row+=`<td>${fmt(shown)}</td>`; const tr=document.createElement('tr'); tr.innerHTML=row; tb.appendChild(tr);
+      const totVal=(state.detalle.metrica==="COSTO_HA")?(state.supMap[c]? tot/state.supMap[c]:NaN):tot;
+      const shown = singleMonth
+        ? ((state.detalle.metrica==="COSTO_HA")?(state.supMap[c]? (byFaMes[f][meses[0]]||0)/state.supMap[c]:NaN):(byFaMes[f][meses[0]]||0))
+        : totVal;
+      row+=`<td>${fmt(shown)}</td>`; const tr=document.createElement('tr'); tr.innerHTML=row; tb.appendChild(tr);
     }
     body.appendChild(table); box.appendChild(head); box.appendChild(body); cont.appendChild(box);
     head.onclick = ()=>{ const wasHidden = body.classList.contains('hidden'); body.classList.toggle('hidden'); head.querySelector('.acc-caret').textContent = wasHidden ? '▼' : '▶'; };
