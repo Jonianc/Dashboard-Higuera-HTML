@@ -63,7 +63,7 @@ tfoot td{font-weight:600;background:#111522;position:sticky;bottom:0}
   <div class="subtitle">
     Temporada 2025–2026 · Fuente: <span class="badge" id="srcChip">CSV embebido</span>
 //    · <button id="btnSwap" class="link">Cambiar CSV</button>
-//    · <button id="btnSave" class="link">Guardar HTML con datos</button>
+    · <button id="btnSave" class="link">💾 Guardar Dashboard con BASE 24-25 actualizada</button>
     · Generado: <span id="gen">2025-11-12 14:35</span>
   </div>
 </header>
@@ -1111,6 +1111,7 @@ if(btnUpload2425 && file2425){
           return;
         }
         comp2425 = nuevo;
+        window.__lastCSV2425 = raw; // Guardar CSV crudo para exportar
         refreshAll();
         alert('Base 24-25 actualizada correctamente.');
       }catch(err){
@@ -1127,6 +1128,7 @@ const EMBED_CSV_2425 = "ORIGEN;TEMPORADA;FECHA;RAZ\u00d3N SOCIAL;PREDIO;SECTOR;C
 try{
   if(EMBED_CSV_2425){
     comp2425 = ingestCSV2425(EMBED_CSV_2425);
+    window.__lastCSV2425 = EMBED_CSV_2425; // Guardar CSV crudo para exportar
   }
 }catch(e){
   console.error('Error al cargar BASE 24-25 embebida', e);
@@ -1272,13 +1274,22 @@ swapInput.addEventListener('change', async ()=>{
 // Guardar HTML con datos embebidos
 async function saveHTMLWithData() { 
   try{
-    const json = JSON.stringify(window.__lastCSV || EMBED_CSV);
+    // Preparar CSV actualizado de 24-25
+    const csv2425 = window.__lastCSV2425 || EMBED_CSV_2425;
+    const json2425 = JSON.stringify(csv2425);
+    
+    // Obtener HTML actual
     let html = document.documentElement.outerHTML;
-    html = html.replace(/const EMBED_CSV = [\s\S]*?;\n/, 'const EMBED_CSV = ' + json + ';\n');
-    html = html.replace(/id="srcChip">[^<]*/,'id="srcChip">CSV embebido');
+    
+    // Reemplazar EMBED_CSV_2425 con datos actualizados
+    html = html.replace(/const EMBED_CSV_2425 = [\s\S]*?;\ntry/, 'const EMBED_CSV_2425 = ' + json2425 + ';\ntry');
+    
+    // Actualizar el badge para indicar que tiene datos actualizados
+    html = html.replace(/id="srcChip">[^<]*/,'id="srcChip">API Agrosmart (en vivo)');
+    
     const full = '<!DOCTYPE html>\n' + html;
     const blob = new Blob([full], {type:'text/html'});
-    const filename = 'dashboard_la_higuera_25-26_pre_cargado.html';
+    const filename = 'dashboard_la_higuera_25-26_actualizado.html';
     if (window.showSaveFilePicker) {
       const handle = await window.showSaveFilePicker({
         suggestedName: filename,
@@ -1292,7 +1303,7 @@ async function saveHTMLWithData() {
       const a = document.createElement('a'); a.href = url; a.download = filename; a.click();
       setTimeout(()=>URL.revokeObjectURL(url), 1000);
     }
-    alert('Listo. Se guardó un HTML independiente con el CSV embebido.');
+    alert('Listo. Se guardó un HTML independiente con la BASE 24-25 actualizada.\n\nLa base 25-26 seguirá cargándose desde la API al abrir el archivo.');
   }catch(e){ alert('No se pudo guardar el HTML: ' + (e?.message || e)); }
 }
 document.getElementById('btnSave').addEventListener('click', saveHTMLWithData);
